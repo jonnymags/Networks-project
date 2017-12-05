@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import sys
 from collections import defaultdict
 from networkx.algorithms import bipartite
+import numpy as np
+import mmsbm
+import time
 
 def parse_reviews(review_file, business_ids):
 	user_ids = []
@@ -11,7 +14,7 @@ def parse_reviews(review_file, business_ids):
 	stars = {}
 	i = 0
 
-	with open(review_file, "rb") as f:
+	with open(review_file, "r") as f:
 		for line in f:
 			j = json.loads(line)
 			business_id = j["business_id"]
@@ -33,7 +36,7 @@ def parse_reviews(review_file, business_ids):
 def parse_businesses(business_file):
 	business_ids = {}
 	i = 0
-	with open(business_file, "rb") as f:
+	with open(business_file, "r") as f:
 		for line in f:
 			j = json.loads(line)
 			if i < 100 and j["city"] == "Las Vegas" and "Food" in j["categories"]:
@@ -58,10 +61,46 @@ def main():
 	b.add_nodes_from(user_ids, bipartite=0)
 	b.add_nodes_from(business_ids.keys(), bipartite=1)
 	b.add_edges_from(items)
-	nx.draw(b)
-	plt.show()
+	
+	
+	b0 = 0 
+	b1 = 0
+	for node in b.nodes():
+		b.node[node]['eta-theta'] = np.full(10,0.1)
+		if b.node[node]['bipartite'] == 0:
+			b0 += 1
+		if b.node[node]['bipartite'] == 1:
+			b1 += 1
+	print(b0,b1,b0+b1,len(b.nodes()))
 
+	p = np.full((5,10,10), 0.2) ## (r,k,l)
 
+	#for edge in b.edges():
+	#	print(stars[mmsbm.order_edge(b,edge)])
+
+	t1 = time.time()
+	for i in range(5):
+		mmsbm.update(b,p,stars)
+		t2 = time.time()
+		print(t2-t1)
+	print(b.nodes(data=True))
+	for r in range(5):
+		print(p[r])
+	'''
+	count = 0
+	nodes = nx.get_node_attributes(b,'bipartite')
+	print(nodes)
+	for att in nodes:
+		if nodes[att] == 0:# print(att)# == 1:
+			count += 1
+			G.node[
+	'''
+	#print(count)
+	#print(stars[('ajxohdcsKhRGFlEvHZDyTw', 'PSMJesRmIDmust2MUw7aQA')])
+#	nx.draw(b)
+#	plt.show()
+
+	#print(len(user_ids))
 
 if __name__ == "__main__":
 	main()
