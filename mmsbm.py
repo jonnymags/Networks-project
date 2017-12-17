@@ -50,7 +50,7 @@ def order_edge(b,edge): ##(graph, tuple)
     
 
 def update(b,p,stars):
-
+    
     omega_dict = {}
     ## build the omega dictionary, size is |edges| x |K| x |L|
     for edge in b.edges():
@@ -58,20 +58,30 @@ def update(b,p,stars):
         o_edge = order_edge(b,edge)
         omega_dict[o_edge] = np.zeros((10,10))
         den_sum = 0.0
+        #prob = 0
         for k in range(10):
             for l in range(10):
                 theta = b.node[o_edge[0]]['eta-theta'][k]
                 eta = b.node[o_edge[1]]['eta-theta'][l]
+
+                #try:
                 p_prime = p[stars[o_edge]-1,k,l] ##remember to -1 for p
+                #except:
+                #    p_prime = 0.1
+                #    prob = 1
                 omega_dict[o_edge][k,l] = theta * eta * p_prime
                 den_sum += theta * eta * p_prime
+        
+        #if prob == 1:
+        #    print("PROBLEM")
+
         for k in range(10):
             for l in range(10):
                 omega_dict[o_edge][k,l] /= den_sum
-#    for key in omega_dict.keys():
-#        print(omega_dict[key])
+    #for key in omega_dict.keys():
+        #print(omega_dict[key])
         
-
+    print("OMEGA DICT DONE")
     ## update the theta, eta
     for node in b.nodes():
         ## update theta (user nodes only)
@@ -105,13 +115,22 @@ def update(b,p,stars):
             for l in range(10):
                 num = 0.0
                 den = 0.0
+
+                for edge in b.edges():
+                    o_edge = order_edge(b,edge)
+                    if stars[o_edge] == r+1:
+                        num += omega_dict[o_edge][k,l]
+                    den += omega_dict[o_edge][k,l]
+                p[r,k,l] = num/den
+
+                '''
                 for edge in stars:
                     o_edge = order_edge(b,edge)
                     if stars[o_edge] == r+1:  
-                        num += omega_dict[o_edge][k,l] ### PROBLEM edge order
+                        num += omega_dict[o_edge][k,l]
                     den += omega_dict[o_edge][k,l]
                 p[r,k,l] = num/den
-                
+                '''
 
 #def main():
 
